@@ -19,7 +19,7 @@ def get_main_categories(url: str) -> pd.DataFrame:
         content = get_content(url)
         main_category_tags = get_main_category_tags(content)
         main_category_names = get_category_names(main_category_tags)
-        main_category_links = get_category_links(main_category_tags)
+        main_category_links = get_main_category_links(main_category_tags)
         return pd.DataFrame({'name': main_category_names, 'link': main_category_links})
 
 
@@ -32,7 +32,7 @@ def get_sub_categories(url: str) -> pd.DataFrame:
         content = get_content(url)
         sub_category_tags = get_sub_category_tags(content)
         sub_category_names = get_category_names(sub_category_tags)
-        sub_category_links = get_category_links(sub_category_tags)
+        sub_category_links = get_sub_category_links(sub_category_tags)
         return pd.DataFrame({'name': sub_category_names, 'link': sub_category_links})
 
 
@@ -52,11 +52,18 @@ def get_sub_category_tags(content: bs4.Tag) -> list[bs4.Tag] | float:
     return sub_category_tags
 
 
-def get_category_links(category_tags: list[bs4.Tag]) -> list[float] | list[str]:
-    if category_tags is nan:
+def get_main_category_links(main_category_tags: list[bs4.Tag]) -> list[float] | list[str]:
+    if main_category_tags is nan:
         return [nan]
-    category_links = [MAIN_URL + a['href'] for a in category_tags]
-    return category_links
+    main_category_links = [MAIN_URL + a['href'] for a in main_category_tags]
+    return main_category_links
+
+
+def get_sub_category_links(sub_category_tags: list[bs4.Tag]) -> list[float] | list[str]:
+    if sub_category_tags is nan:
+        return [nan]
+    sub_category_links = [MAIN_URL + '/' + a['href'] for a in sub_category_tags]
+    return sub_category_links
 
 
 def get_category_names(category_tags: list[bs4.Tag]) -> list[float] | list[str]:
