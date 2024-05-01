@@ -172,6 +172,8 @@ for key in sub_categories.keys():
     for index, name, link in sub_categories[key].itertuples():
         final_data = pd.concat([final_data, get_products(link, key, name)], axis=0, ignore_index=True)
 
+final_data = final_data.assign(date=current_date)
+
 path_file = path_base + 'data/' + current_date + '.csv'
 
 final_data.to_csv(path_file, index=False)
