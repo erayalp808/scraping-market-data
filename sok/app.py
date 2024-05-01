@@ -1,4 +1,3 @@
-import asyncio
 from typing import List, Tuple
 
 import bs4
@@ -13,9 +12,9 @@ create_directory()
 
 def get_main_categories(url: str) -> pd.DataFrame:
     if url is nan:
-        main_category_tags = [nan]
         main_category_names = [nan]
         main_category_links = [nan]
+        return pd.DataFrame({'name': main_category_names, 'link': main_category_links})
     else:
         content = get_content(url)
         main_category_tags = get_main_category_tags(content)
@@ -26,9 +25,9 @@ def get_main_categories(url: str) -> pd.DataFrame:
 
 def get_sub_categories(url: str) -> pd.DataFrame:
     if url is nan:
-        sub_category_tags = [nan]
         sub_category_names = [nan]
         sub_category_links = [nan]
+        return pd.DataFrame({'name': sub_category_names, 'link': sub_category_links})
     else:
         content = get_content(url)
         sub_category_tags = get_sub_category_tags(content)
@@ -76,32 +75,56 @@ def get_category_names(category_tags: List[bs4.Tag]) -> List[float] | List[str]:
 
 MAIN_URL = "https://www.sokmarket.com.tr"
 
-#main_category = get_main_categories(MAIN_URL)
+main_category = get_main_categories(MAIN_URL)
 sub_categories = {}
-
 
 for index, name, link in main_category.itertuples():
     sub_categories[name] = get_sub_categories(link)
 
-for keys in sub_categories.keys():
-    for index, name, link in sub_categories[keys].itertuples():
-        print(link)
 
+def get_products(url, category2, category1) -> pd.DataFrame:
+    try:
+        content = get_content(url)
+        number_of_pages = ceil(get_product_quantity(content) / 20)
+        product_datas: List[pd.DataFrame] = []
 
-def get_products(url):
-    content = get_content(url)
-    print(get_product_quantity(content))
-    number_of_pages = ceil(get_product_quantity(content) / 20)
+        for page in range(number_of_pages):
+            product_page_url = url + f'?page={page + 1}'
+            product_page_content = get_content(product_page_url)
+            product_cards: list[bs4.Tag] = get_product_cards(product_page_content)
+            product_names = list(map(lambda product_card: get_product_name(product_card), product_cards))
+            product_links = list(map(lambda product_card: get_product_link(product_card), product_cards))
+            product_prices = list(map(lambda product_card: get_product_prices(product_card)[0], product_cards))
+            product_prices_high = list(map(lambda product_card: get_product_prices(product_card)[1], product_cards))
+            product_page_data = pd.DataFrame({
+                "category2": category2,
+                "category1": category1,
+                "category": category1,
+                "name": product_names,
+                "price": product_prices,
+                "price_high": product_prices_high,
+                "link": product_links,
+                "page": product_page_url
+            })
+            product_datas.append(product_page_data)
 
-    if number_of_pages < 0:
-        product_page = url + f'?page={number_of_pages}'
-        product_cards: list[bs4.Tag] = get_product_cards(content)
-        product_names = list(map(lambda content: get_product_name(content), product_cards))
-        product_links = list(map(lambda content: get_product_link(content), product_cards))
-        product_prices = list(map(lambda content: get_product_prices(content), product_cards))
-        print(product_cards.__len__(), product_links, product_names, product_prices)
-    else:
-        product_page = url + f'?page={number_of_pages}'
+        merged_data = pd.DataFrame({
+            "category2": [],
+            "category1": [],
+            "category": [],
+            "name": [],
+            "price": [],
+            "price_high": [],
+            "link": [],
+            "page": []
+        })
+
+        for product_data in product_datas:
+            merged_data = pd.concat([merged_data, product_data], axis=0, ignore_index=True)
+
+        return merged_data
+    except:
+        print(f"page: {url} not loaded")
 
 
 def get_product_cards(content: bs4.Tag) -> List[bs4.Tag]:
@@ -132,3 +155,23 @@ def get_product_prices(content: bs4.Tag) -> Tuple[float, float]:
 
 def get_product_link(content: bs4.Tag) -> str:
     return MAIN_URL + content.find('a')['href']
+
+
+final_data = pd.DataFrame({
+    "category2": [],
+    "category1": [],
+    "category": [],
+    "name": [],
+    "price": [],
+    "price_high": [],
+    "link": [],
+    "page": []
+})
+
+for key in sub_categories.keys():
+    for index, name, link in sub_categories[key].itertuples():
+        final_data = pd.concat([final_data, get_products(link, key, name)], axis=0, ignore_index=True)
+
+path_file = path_base + 'data/' + current_date + '.csv'
+
+final_data.to_csv(path_file, index=False)
