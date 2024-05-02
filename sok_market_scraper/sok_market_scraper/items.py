@@ -16,4 +16,3 @@ class SokMarketScraperItem(scrapy.Item):
     prod_link = scrapy.Field()
     pages = scrapy.Field()
     date = scrapy.Field()
-    pass
