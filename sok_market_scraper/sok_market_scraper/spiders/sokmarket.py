@@ -48,7 +48,7 @@ class SokmarketSpider(scrapy.Spider):
         })
 
         for index, name, link in sub_categories.itertuples():
-            yield response.follow(link, callback=self.parse_products, meta={'info': (main_category, name)},
+            yield response.follow(link, callback=self.parse_product_quantity, meta={'info': (main_category, name)},
                                   headers={"User-Agent": random.choice(self.user_agent_list)})
 
     def parse_product_quantity(self, response):
