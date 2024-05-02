@@ -32,10 +32,10 @@ FEEDS = {
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
 
-#DOWNLOAD_HANDLERS = {
-#    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-#    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-#}
+DOWNLOAD_HANDLERS = {
+    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
 
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 
