@@ -11,3 +11,23 @@ from itemadapter import ItemAdapter
 class SokMarketScraperPipeline:
     def process_item(self, item, spider):
         return item
+
+
+class ReorderFieldsPipeline:
+    def process_item(self, item, spider):
+        # Define the desired order of fields
+        field_order = [
+            'category2',
+            'category1',
+            'category',
+            'prod',
+            'price',
+            'high_price',
+            'prod_link',
+            'pages',
+            'date'
+        ]
+        # Create a new dictionary with the fields in the desired order
+        reordered_item = {field: item.get(field) for field in field_order}
+        item = reordered_item
+        return item

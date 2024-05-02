@@ -6,18 +6,31 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+from datetime import date
 
 BOT_NAME = "sok_market_scraper"
 
 SPIDER_MODULES = ["sok_market_scraper.spiders"]
 NEWSPIDER_MODULE = "sok_market_scraper.spiders"
 
+FEEDS = {
+    f"{date.today()}.csv": {
+        "format": "csv",
+        "encoding": "utf8",
+        "store_empty": False,
+        "fields": None,
+        "indent": 4,
+        "item_export_kwargs": {
+            "export_empty_fields": True,
+        },
+    },
+}
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "sok_market_scraper (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -62,9 +75,9 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    "sok_market_scraper.pipelines.SokMarketScraperPipeline": 300,
-#}
+ITEM_PIPELINES = {
+    "sok_market_scraper.pipelines.ReorderFieldsPipeline": 100,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
