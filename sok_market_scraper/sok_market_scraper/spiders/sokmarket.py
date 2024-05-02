@@ -1,10 +1,13 @@
 import random
+from typing import Iterable
+
 import scrapy
 import pandas as pd
 import scrapy_playwright
 from numpy import nan
 from math import ceil
 
+from scrapy import Request
 from scrapy_playwright.page import PageMethod
 
 from ..items import SokMarketScraperItem
@@ -13,8 +16,8 @@ from datetime import date
 
 class SokmarketSpider(scrapy.Spider):
     name = "sokmarket"
-    allowed_domains = ["sokmarket.com.tr"]
-    start_urls = ["https://sokmarket.com.tr"]
+    current_date = date.today()
+    home_url = "https://www.sokmarket.com.tr/"
 
     user_agent_list = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 '
@@ -27,10 +30,20 @@ class SokmarketSpider(scrapy.Spider):
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 '
         'Safari/537.36 Edge/18.18363',
     ]
-    current_date = date.today()
-    home_url = "https://www.sokmarket.com.tr/"
 
-    def parse(self, response):
+    def start_requests(self):
+        yield scrapy.Request(self.home_url, meta={
+            "playwright": True,
+            "playwright_include_page": True,
+            "playwright_page_methods": [
+                PageMethod('wait_for_timeout', 2000)
+            ]
+        })
+
+    async def parse(self, response):
+        page = response.meta['playwright_page']
+        await page.close()
+
         main_category_tags: scrapy.selector.unified.SelectorList = response.css('.CategoryList_categories__wmXtl')
         main_categories = pd.DataFrame({
             'names': main_category_tags.css('span::text').getall()[2:-1],
@@ -39,10 +52,24 @@ class SokmarketSpider(scrapy.Spider):
         })
 
         for index, name, link in main_categories.itertuples():
-            yield response.follow(link, callback=self.parse_sub_categories, meta={'info': name},
-                                  headers={"User-Agent": random.choice(self.user_agent_list)})
+            yield scrapy.Request(
+                url=link,
+                callback=self.parse_sub_categories,
+                meta={
+                    "playwright": True,
+                    "playwright_include_page": True,
+                    "playwright_page_methods": [
+                        PageMethod('wait_for_timeout', 2000)
+                    ],
+                    'info': name
+                },
+                headers={"User-Agent": random.choice(self.user_agent_list)}
+            )
 
-    def parse_sub_categories(self, response):
+    async def parse_sub_categories(self, response):
+        page = response.meta['playwright_page']
+        await page.close()
+
         main_category = response.meta['info']
         sub_category_tags: scrapy.selector.unified.SelectorList = (response
                                                                    .css('.CCollapse-module_cCollapseContent__sR6gM'))
@@ -52,8 +79,6 @@ class SokmarketSpider(scrapy.Spider):
         })
 
         for index, name, link in sub_categories.itertuples():
-            #yield response.follow(link, callback=self.parse_product_quantity, meta={'info': (main_category, name)},
-            #                      headers={"User-Agent": random.choice(self.user_agent_list)})
             yield scrapy.Request(
                 url=link,
                 callback=self.parse_product_quantity,
@@ -79,9 +104,6 @@ class SokmarketSpider(scrapy.Spider):
         while current_page_number < number_of_pages:
             current_page_number += 1
             next_page_url = response.url + f'?page={current_page_number}'
-            #yield response.follow(next_page_url, callback=self.parse_products,
-            #                      meta={'info': response.meta['info']},
-            #                      headers={"User-Agent": random.choice(self.user_agent_list)})
 
             yield scrapy.Request(
                 url=next_page_url,
