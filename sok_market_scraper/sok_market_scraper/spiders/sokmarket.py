@@ -1,8 +1,12 @@
 import random
 import scrapy
 import pandas as pd
+import scrapy_playwright
 from numpy import nan
 from math import ceil
+
+from scrapy_playwright.page import PageMethod
+
 from ..items import SokMarketScraperItem
 from datetime import date
 
@@ -48,25 +52,58 @@ class SokmarketSpider(scrapy.Spider):
         })
 
         for index, name, link in sub_categories.itertuples():
-            yield response.follow(link, callback=self.parse_products, meta={'info': (main_category, name)},
-                                  headers={"User-Agent": random.choice(self.user_agent_list)})
+            #yield response.follow(link, callback=self.parse_product_quantity, meta={'info': (main_category, name)},
+            #                      headers={"User-Agent": random.choice(self.user_agent_list)})
+            yield scrapy.Request(
+                url=link,
+                callback=self.parse_product_quantity,
+                meta={
+                    "playwright": True,
+                    "playwright_include_page": True,
+                    "playwright_page_methods": [
+                        PageMethod('wait_for_timeout', 2000)
+                    ],
+                    'info': (main_category, name)
+                },
+                headers={"User-Agent": random.choice(self.user_agent_list)}
+            )
 
-    def parse_product_quantity(self, response):
-        number_of_pages = ceil(int(response.css('p.PLPDesktopHeader_quantityInfoText__4AiWN::text')
-                                   .get().split()[0]) / 20)
+    async def parse_product_quantity(self, response):
+        page = response.meta['playwright_page']
+        await page.close()
+
+        number_of_pages = ceil(int(response.css('.PLPDesktopHeader_quantityInfoText__4AiWN::text')
+                                   .get().split(" ")[0]) / 20)
 
         current_page_number = 0
         while current_page_number < number_of_pages:
             current_page_number += 1
             next_page_url = response.url + f'?page={current_page_number}'
-            yield response.follow(next_page_url, callback=self.parse_products,
-                                  meta={'info': response.meta['info']},
-                                  headers={"User-Agent": random.choice(self.user_agent_list)})
+            #yield response.follow(next_page_url, callback=self.parse_products,
+            #                      meta={'info': response.meta['info']},
+            #                      headers={"User-Agent": random.choice(self.user_agent_list)})
 
-    def parse_products(self, response):
+            yield scrapy.Request(
+                url=next_page_url,
+                callback=self.parse_products,
+                meta={
+                    "playwright": True,
+                    "playwright_include_page": True,
+                    "playwright_page_methods": [
+                        PageMethod('wait_for_timeout', 2000)
+                    ],
+                    'info': response.meta['info']
+                },
+                headers={"User-Agent": random.choice(self.user_agent_list)}
+            )
+
+    async def parse_products(self, response):
+        page = response.meta['playwright_page']
+        await page.close()
+
         main_category, sub_category = response.meta['info']
         product_names = response.css('.PLPProductListing_PLPCardParent__GC2qb h2::text').getall()
-        product_links = list(map(lambda href: self.home_url + href,
+        product_links = list(map(lambda href: self.home_url + href[1:],
                                  response.css('.PLPProductListing_PLPCardParent__GC2qb a::attr(href)').getall()))
         product_price_boxes: scrapy.selector.unified.SelectorList = response.css('.CPriceBox-module_cPriceBox__1OWBR')
         product_prices = []
