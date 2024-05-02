@@ -75,15 +75,15 @@ class SokmarketSpider(scrapy.Spider):
         for price_box in product_price_boxes:
             discount_price_tag = price_box.css('.CPriceBox-module_discountedPriceContainer__nsaTN')
             if discount_price_tag:
-                product_prices_high.append(discount_price_tag.css('.CPriceBox-module_price__bYk-c span::text')
-                                           .get().replace('₺', '').replace('.', '').replace(',', '.'))
+                product_prices_high.append(float(discount_price_tag.css('.CPriceBox-module_price__bYk-c span::text')
+                                                 .get().replace('₺', '').replace('.', '').replace(',', '.')))
                 product_prices.append(
-                    discount_price_tag.css('span.CPriceBox-module_discountedPrice__15Ffw::text')
-                    .get().replace('₺', '').replace('.', '').replace(',', '.'))
+                    float(discount_price_tag.css('span.CPriceBox-module_discountedPrice__15Ffw::text')
+                          .get().replace('₺', '').replace('.', '').replace(',', '.')))
             else:
                 product_prices_high.append(nan)
-                product_prices.append(price_box.css('span.CPriceBox-module_price__bYk-c::text')
-                                      .get().replace('₺', '').replace('.', '').replace(',', '.'))
+                product_prices.append(float(price_box.css('span.CPriceBox-module_price__bYk-c::text')
+                                            .get().replace('₺', '').replace('.', '').replace(',', '.')))
 
         products = pd.DataFrame({
             'category2': main_category,
