@@ -1,4 +1,4 @@
-# Scrapy settings for sok_market_scraper project
+# Scrapy settings for market_scraper project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -8,10 +8,10 @@
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 from datetime import date
 
-BOT_NAME = "sok_market_scraper"
+BOT_NAME = "market_scraper"
 
-SPIDER_MODULES = ["sok_market_scraper.spiders"]
-NEWSPIDER_MODULE = "sok_market_scraper.spiders"
+SPIDER_MODULES = ["market_scraper.spiders"]
+NEWSPIDER_MODULE = "market_scraper.spiders"
 
 FEEDS = {
     f"{date.today()}.csv": {
@@ -27,7 +27,7 @@ FEEDS = {
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "sok_market_scraper (+http://www.yourdomain.com)"
+#USER_AGENT = "market_scraper (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -65,13 +65,13 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    "sok_market_scraper.middlewares.SokMarketScraperSpiderMiddleware": 543,
+#    "market_scraper.middlewares.SokMarketScraperSpiderMiddleware": 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    "sok_market_scraper.middlewares.SokMarketScraperDownloaderMiddleware": 543,
+#    "market_scraper.middlewares.SokMarketScraperDownloaderMiddleware": 543,
 #}
 
 # Enable or disable extensions
@@ -83,7 +83,7 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    "sok_market_scraper.pipelines.ReorderFieldsPipeline": 100,
+    "market_scraper.pipelines.ReorderFieldsPipeline": 100,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
