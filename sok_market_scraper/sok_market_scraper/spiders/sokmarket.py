@@ -1,5 +1,6 @@
 import scrapy
 import pandas as pd
+import scrapy_playwright
 from numpy import nan
 from math import ceil
 
@@ -20,7 +21,6 @@ class SokmarketSpider(scrapy.Spider):
 
     async def parse(self, response):
         page = response.meta["playwright_page"]
-
 
         try:
             await page.wait_for_load_state("networkidle")
@@ -59,57 +59,6 @@ class SokmarketSpider(scrapy.Spider):
                     "playwright_include_page": True,
                 }
             )
-
-        for index, name, link in sub_categories.itertuples():
-            yield response.follow(link, callback=self.parse_product_quantity, meta={'info': (main_category, name)},
-                                  headers={"User-Agent": random.choice(self.user_agent_list)})
-
-    def parse_product_quantity(self, response):
-        number_of_pages = ceil(int(response.css('p.PLPDesktopHeader_quantityInfoText__4AiWN::text')
-                                   .get().split()[0]) / 20)
-
-        current_page_number = 0
-        while current_page_number < number_of_pages:
-            current_page_number += 1
-            next_page_url = response.url + f'?page={current_page_number}'
-            yield response.follow(next_page_url, callback=self.parse_products,
-                                  meta={'info': response.meta['info']},
-                                  headers={"User-Agent": random.choice(self.user_agent_list)})
-
-    def parse_products(self, response):
-        main_category, sub_category = response.meta['info']
-        product_names = response.css('.PLPProductListing_PLPCardParent__GC2qb h2::text').getall()
-        product_links = list(map(lambda href: self.home_url + href,
-                                 response.css('.PLPProductListing_PLPCardParent__GC2qb a::attr(href)').getall()))
-        product_price_boxes: scrapy.selector.unified.SelectorList = response.css('.CPriceBox-module_cPriceBox__1OWBR')
-        product_prices = []
-        product_prices_high = []
-
-        for price_box in product_price_boxes:
-            discount_price_tag = price_box.css('.CPriceBox-module_discountedPriceContainer__nsaTN')
-            if discount_price_tag:
-                product_prices_high.append(float(discount_price_tag.css('.CPriceBox-module_price__bYk-c span::text')
-                                                 .get().replace('₺', '').replace('.', '').replace(',', '.')))
-                product_prices.append(
-                    float(discount_price_tag.css('span.CPriceBox-module_discountedPrice__15Ffw::text')
-                          .get().replace('₺', '').replace('.', '').replace(',', '.')))
-            else:
-                product_prices_high.append(nan)
-                product_prices.append(float(price_box.css('span.CPriceBox-module_price__bYk-c::text')
-                                            .get().replace('₺', '').replace('.', '').replace(',', '.')))
-
-        products = pd.DataFrame({
-            'category2': main_category,
-            'category1': sub_category,
-            'category': sub_category,
-            'prod': product_names,
-            'price': product_prices,
-            'high_price': product_prices_high,
-            'prod_link': product_links,
-            'pages': response.url,
-            'date': self.current_date
-        })
-
 
     async def parse_sub_categories(self, response):
         page = response.meta["playwright_page"]
@@ -207,23 +156,20 @@ class SokmarketSpider(scrapy.Spider):
 
             for product_card in product_cards:
                 is_out_of_stock = bool(product_card.css(
-                    ".CButton-module_buttonWrapper__rn-B-.CCustomSelect-module_buttonWrapper__CMjV0.CButton-module_medium__XbabL.CButton-module_secondary__vR-1m").get())
+                    ".CButton-module_buttonWrapper__rn-B-.CCustomSelect-module_buttonWrapper__CMjV0"
+                    ".CButton-module_medium__XbabL.CButton-module_secondary__vR-1m").get())
 
                 if is_out_of_stock: continue
                 product_name = product_card.css("h2::text").get()
                 product_link = self.home_url + product_card.css('a::attr(href)').get()[1:]
                 is_discounted = bool(product_card.css('.CPriceBox-module_discountedPriceContainer__nsaTN').get())
-                product_price = float(
-                    product_card.css('span.CPriceBox-module_discountedPrice__15Ffw::text').get().replace('₺',
-                                                                                                         '').replace(
-                        '.', '').replace(',', '.')) if is_discounted else float(
-                    product_card.css('span.CPriceBox-module_price__bYk-c::text').get().replace('₺', '').replace('.',
-                                                                                                                '').replace(
-                        ',', '.'))
-                product_price_high = float(
-                    product_card.css('.CPriceBox-module_price__bYk-c span::text').get().replace('₺', '').replace('.',
-                                                                                                                 '').replace(
-                        ',', '.')) if is_discounted else nan
+                product_price = float(product_card.css('span.CPriceBox-module_discountedPrice__15Ffw::text').get()
+                                      .replace('₺', '').replace('.', '').replace(',', '.')) \
+                    if is_discounted else float(product_card.css('span.CPriceBox-module_price__bYk-c::text').get()
+                                                .replace('₺', '').replace('.', '').replace(',', '.'))
+                product_price_high = float(product_card.css('.CPriceBox-module_price__bYk-c span::text').get()
+                                           .replace('₺', '').replace('.', '').replace(',', '.')) \
+                    if is_discounted else nan
 
                 main_category, sub_category = response.meta["categories"]
 
