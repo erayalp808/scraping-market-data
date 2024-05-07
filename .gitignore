@@ -1,3 +1,22 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+
+# Scraped data
 *.csv
-*.pyc
+*.json
+
+# Egg cache
+.pytest_cache/
+.coverage
+.tox/
+.pytest_cache/
+.scrapy/
+
+# Virtual environment
+venv/
+env/
