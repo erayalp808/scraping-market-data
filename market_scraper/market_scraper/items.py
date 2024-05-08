@@ -6,7 +6,7 @@
 import scrapy
 
 
-class SokMarketScraperItem(scrapy.Item):
+class MarketItem(scrapy.Item):
     category2 = scrapy.Field()
     category1 = scrapy.Field()
     category = scrapy.Field()

@@ -1,10 +1,7 @@
 import scrapy
 import pandas as pd
-import scrapy_playwright
-from numpy import nan
 from math import ceil
-
-from ..items import SokMarketScraperItem
+from ..items import MarketItem
 from datetime import date
 
 
@@ -25,6 +22,7 @@ class SokmarketSpider(scrapy.Spider):
         try:
             await page.wait_for_load_state("networkidle")
             content = await page.content()
+            await page.close()
 
             selector = scrapy.Selector(text=content)
             main_category_tags = selector.css(".CategoryList_categories__wmXtl")[0]
@@ -44,12 +42,7 @@ class SokmarketSpider(scrapy.Spider):
                         "main_category": name
                     }
                 )
-
-            await page.close()
         except Exception as exception:
-            await page.screenshot(path="main_category_page_screenshot.png", full_page=True)
-            await page.close()
-
             print(exception)
             yield scrapy.Request(
                 url=response.url,
@@ -66,6 +59,7 @@ class SokmarketSpider(scrapy.Spider):
         try:
             await page.wait_for_load_state("networkidle")
             content = await page.content()
+            await page.close()
 
             selector = scrapy.Selector(text=content)
             sub_category_tags = selector.css(".CCollapse-module_cCollapseContent__sR6gM")[0]
@@ -85,12 +79,7 @@ class SokmarketSpider(scrapy.Spider):
                         "categories": (response.meta["main_category"], name)
                     }
                 )
-
-            await page.close()
         except Exception as exception:
-            await page.screenshot(path="main_category_page_screenshot.png", full_page=True)
-            await page.close()
-
             print(exception)
             yield scrapy.Request(
                 url=response.url,
@@ -108,6 +97,7 @@ class SokmarketSpider(scrapy.Spider):
         try:
             await page.wait_for_load_state("networkidle")
             content = await page.content()
+            await page.close()
 
             selector = scrapy.Selector(text=content)
             number_of_pages = ceil(
@@ -127,12 +117,7 @@ class SokmarketSpider(scrapy.Spider):
                         "categories": response.meta["categories"]
                     }
                 )
-
-            await page.close()
         except Exception as exception:
-            await page.screenshot(path="sub_category_page_screenshot.png", full_page=True)
-            await page.close()
-
             print(exception)
             yield scrapy.Request(
                 url=response.url,
@@ -150,30 +135,45 @@ class SokmarketSpider(scrapy.Spider):
         try:
             await page.wait_for_load_state("networkidle")
             content = await page.content()
+            await page.close()
 
             selector = scrapy.Selector(text=content)
             product_cards = selector.css(".PLPProductListing_PLPCardParent__GC2qb")
 
             for product_card in product_cards:
+                main_category, sub_category = response.meta["categories"]
+                product_name = product_card.css("h2::text").get()
+                product_link = self.home_url + product_card.css("a::attr(href)").get()[1:]
                 is_out_of_stock = bool(product_card.css(
                     ".CButton-module_buttonWrapper__rn-B-.CCustomSelect-module_buttonWrapper__CMjV0"
                     ".CButton-module_medium__XbabL.CButton-module_secondary__vR-1m").get())
 
-                if is_out_of_stock: continue
-                product_name = product_card.css("h2::text").get()
-                product_link = self.home_url + product_card.css('a::attr(href)').get()[1:]
-                is_discounted = bool(product_card.css('.CPriceBox-module_discountedPriceContainer__nsaTN').get())
-                product_price = float(product_card.css('span.CPriceBox-module_discountedPrice__15Ffw::text').get()
+                if is_out_of_stock:
+                    product = MarketItem(
+                        category2=main_category,
+                        category1=sub_category,
+                        category=sub_category,
+                        prod=product_name,
+                        price=None,
+                        high_price=None,
+                        prod_link=product_link,
+                        pages=response.url,
+                        in_stock=False,
+                        date=self.current_date
+                    )
+
+                    yield product
+                    continue
+                is_discounted = bool(product_card.css(".CPriceBox-module_discountedPriceContainer__nsaTN").get())
+                product_price = float(product_card.css("span.CPriceBox-module_discountedPrice__15Ffw::text").get()
                                       .replace('₺', '').replace('.', '').replace(',', '.')) \
-                    if is_discounted else float(product_card.css('span.CPriceBox-module_price__bYk-c::text').get()
+                    if is_discounted else float(product_card.css("span.CPriceBox-module_price__bYk-c::text").get()
                                                 .replace('₺', '').replace('.', '').replace(',', '.'))
-                product_price_high = float(product_card.css('.CPriceBox-module_price__bYk-c span::text').get()
+                product_price_high = float(product_card.css(".CPriceBox-module_price__bYk-c span::text").get()
                                            .replace('₺', '').replace('.', '').replace(',', '.')) \
-                    if is_discounted else nan
+                    if is_discounted else None
 
-                main_category, sub_category = response.meta["categories"]
-
-                product = SokMarketScraperItem(
+                product = MarketItem(
                     category2=main_category,
                     category1=sub_category,
                     category=sub_category,
@@ -182,16 +182,12 @@ class SokmarketSpider(scrapy.Spider):
                     high_price=product_price_high,
                     prod_link=product_link,
                     pages=response.url,
+                    in_stock=True,
                     date=self.current_date
                 )
 
                 yield product
-
-            await page.close()
         except Exception as exception:
-            await page.screenshot(path="product_page_screenshot.png", full_page=True)
-            await page.close()
-
             print(exception)
             yield scrapy.Request(
                 url=response.url,
