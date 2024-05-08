@@ -4,7 +4,7 @@ import scrapy_playwright
 from numpy import nan
 from math import ceil
 
-from ..items import SokMarketScraperItem
+from ..items import MarketItem
 from datetime import date
 
 
@@ -161,19 +161,19 @@ class SokmarketSpider(scrapy.Spider):
 
                 if is_out_of_stock: continue
                 product_name = product_card.css("h2::text").get()
-                product_link = self.home_url + product_card.css('a::attr(href)').get()[1:]
-                is_discounted = bool(product_card.css('.CPriceBox-module_discountedPriceContainer__nsaTN').get())
-                product_price = float(product_card.css('span.CPriceBox-module_discountedPrice__15Ffw::text').get()
+                product_link = self.home_url + product_card.css("a::attr(href)").get()[1:]
+                is_discounted = bool(product_card.css(".CPriceBox-module_discountedPriceContainer__nsaTN").get())
+                product_price = float(product_card.css("span.CPriceBox-module_discountedPrice__15Ffw::text").get()
                                       .replace('₺', '').replace('.', '').replace(',', '.')) \
-                    if is_discounted else float(product_card.css('span.CPriceBox-module_price__bYk-c::text').get()
+                    if is_discounted else float(product_card.css("span.CPriceBox-module_price__bYk-c::text").get()
                                                 .replace('₺', '').replace('.', '').replace(',', '.'))
-                product_price_high = float(product_card.css('.CPriceBox-module_price__bYk-c span::text').get()
+                product_price_high = float(product_card.css(".CPriceBox-module_price__bYk-c span::text").get()
                                            .replace('₺', '').replace('.', '').replace(',', '.')) \
                     if is_discounted else nan
 
                 main_category, sub_category = response.meta["categories"]
 
-                product = SokMarketScraperItem(
+                product = MarketItem(
                     category2=main_category,
                     category1=sub_category,
                     category=sub_category,
