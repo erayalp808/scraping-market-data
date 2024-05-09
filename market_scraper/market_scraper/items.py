@@ -7,12 +7,13 @@ import scrapy
 
 
 class MarketItem(scrapy.Item):
-    category2 = scrapy.Field()
-    category1 = scrapy.Field()
-    category = scrapy.Field()
-    prod = scrapy.Field()
+    main_category = scrapy.Field()
+    sub_category = scrapy.Field()
+    lowest_category = scrapy.Field()
+    name = scrapy.Field()
     price = scrapy.Field()
     high_price = scrapy.Field()
-    prod_link = scrapy.Field()
-    pages = scrapy.Field()
+    in_stock = scrapy.Field()
+    product_link = scrapy.Field()
+    page_link = scrapy.Field()
     date = scrapy.Field()

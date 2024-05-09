@@ -110,27 +110,28 @@ class MarketpaketiSpider(scrapy.Spider):
             selector = scrapy.Selector(text=content)
             product_cards = selector.css(".liste_urun")
 
-            for product_card in product_cards:
-                product_name = product_card.css("a.urun_adi_ic::text").get().strip()
-                product_link = product_card.css("a.urun_adi_ic::attr(href)").get()
-                product_price_high = product_card.css(".urun_fiyat strong::text").get().replace(" TL", '').strip()
-                product_price = product_card.css(".urun_fiyat::text").get().replace(" TL", '').strip()
-                product_price = product_price.replace(product_price_high, '').strip() \
-                    if product_price_high else product_price
-                is_in_stock = bool(product_card.css(".urun_sepet").get())
+            if product_cards:
+                for product_card in product_cards:
+                    product_name = product_card.css("a.urun_adi_ic::text").get().strip()
+                    product_link = product_card.css("a.urun_adi_ic::attr(href)").get()
+                    product_price_high = product_card.css(".urun_fiyat strong::text").get().replace(" TL", '').strip()
+                    product_price = product_card.css(".urun_fiyat::text").get().replace(" TL", '').strip()
+                    product_price = product_price.replace(product_price_high, '').strip() \
+                        if product_price_high else product_price
+                    is_in_stock = bool(product_card.css(".urun_sepet").get())
 
-                yield MarketItem(
-                    category2=response.meta["categories"]["main_category"],
-                    category1=response.meta["categories"]["sub_category"],
-                    category=response.meta["categories"]["lowest_category"],
-                    prod=product_name,
-                    price=product_price,
-                    high_price=product_price_high,
-                    prod_link=product_link,
-                    pages=response.url,
-                    in_stock=is_in_stock,
-                    date=self.current_date
-                )
+                    yield MarketItem(
+                        main_category=response.meta["categories"]["main_category"],
+                        sub_category=response.meta["categories"]["sub_category"],
+                        lowest_category=response.meta["categories"]["lowest_category"],
+                        name=product_name,
+                        price=product_price,
+                        high_price=product_price_high,
+                        in_stock=is_in_stock,
+                        product_link=product_link,
+                        page_link=response.url,
+                        date=self.current_date
+                    )
 
             next_page_url = self.get_next_page(selector)
 
