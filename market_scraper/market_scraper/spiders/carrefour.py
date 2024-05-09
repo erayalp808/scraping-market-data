@@ -122,15 +122,15 @@ class CarrefourSpider(scrapy.Spider):
                 product_link = self.home_url + product_card.css("a::attr(href)").get()
 
                 product = MarketItem(
-                    category2=response.meta["info"]["main_category"],
-                    category1=response.meta["info"]["sub_category"],
-                    category=response.meta["info"]["lowest_category"],
-                    prod=product_name,
+                    main_category=response.meta["info"]["main_category"],
+                    sub_category=response.meta["info"]["sub_category"],
+                    lowest_category=response.meta["info"]["lowest_category"],
+                    name=product_name,
                     price=product_price,
                     high_price=product_price_high,
-                    prod_link=product_link,
-                    pages=response.url,
                     in_stock=not is_out_of_stock,
+                    product_link=product_link,
+                    page_link=response.url,
                     date=self.current_date
                 )
 

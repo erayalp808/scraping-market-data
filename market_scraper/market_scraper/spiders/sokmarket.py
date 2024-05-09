@@ -150,15 +150,15 @@ class SokmarketSpider(scrapy.Spider):
 
                 if is_out_of_stock:
                     product = MarketItem(
-                        category2=main_category,
-                        category1=sub_category,
-                        category=sub_category,
-                        prod=product_name,
+                        main_category=main_category,
+                        sub_category=sub_category,
+                        lowest_category=sub_category,
+                        name=product_name,
                         price=None,
                         high_price=None,
-                        prod_link=product_link,
-                        pages=response.url,
                         in_stock=False,
+                        product_link=product_link,
+                        page_link=response.url,
                         date=self.current_date
                     )
 
