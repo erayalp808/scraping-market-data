@@ -1,3 +1,5 @@
+import traceback
+
 import scrapy
 
 from ..items import MarketItem
@@ -92,8 +94,8 @@ class CarrefourSpider(scrapy.Spider):
                         )
 
             await page.close()
-        except Exception as exception:
-            print(exception)
+        except:
+            traceback.print_exc()
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse,
@@ -121,7 +123,7 @@ class CarrefourSpider(scrapy.Spider):
                 product_price_high = self.parse_price_high(product_card)
                 product_link = self.home_url + product_card.css("a::attr(href)").get()
 
-                product = MarketItem(
+                yield MarketItem(
                     main_category=response.meta["info"]["main_category"],
                     sub_category=response.meta["info"]["sub_category"],
                     lowest_category=response.meta["info"]["lowest_category"],
@@ -133,8 +135,6 @@ class CarrefourSpider(scrapy.Spider):
                     page_link=response.url,
                     date=self.current_date
                 )
-
-                yield product
 
             next_page = self.get_next_page(selector)
 
@@ -148,8 +148,8 @@ class CarrefourSpider(scrapy.Spider):
                         "info": response.meta["info"]
                     }
                 )
-        except Exception as exception:
-            print(exception)
+        except:
+            traceback.print_exc()
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse_category_page,
