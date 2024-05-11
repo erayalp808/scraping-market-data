@@ -29,11 +29,11 @@ class MopasSpider(scrapy.Spider):
             await page.close()
 
             selector = scrapy.Selector(text=content)
-            main_categories = selector.css("ul.hidden-sm.col-sm-2.col-md-2.sidebar.nav.nav-sidebar.nav-fixed > li")
+            main_categories = selector.css("ul.hidden-sm.col-sm-2.col-md-2.sidebar.nav.nav-sidebar.nav-fixed > li")[2:-1]
 
             for main_category in main_categories:
-                main_category_name = main_category.css(".container-fluid > a::text").get()
-                main_category_link = self.home_url + main_category.css(".container-fluid > a::attr(href)").get()
+                main_category_name = main_category.css(".container-fluid h3 a::text").get()
+                #main_category_link = self.home_url + main_category.css(".container-fluid h3 a::attr(href)").get()
                 sub_categories = main_category.css(".container-fluid ul li a")
 
                 for sub_category in sub_categories:
@@ -75,7 +75,7 @@ class MopasSpider(scrapy.Spider):
             lowest_categories = selector.css("#category li")
 
             for lowest_category in lowest_categories:
-                lowest_category_name = lowest_category.css("a span::text")[0]
+                lowest_category_name = lowest_category.css("a span::text")[0].get()
                 lowest_category_link = self.home_url + lowest_category.css("a::attr(href)").get()
 
                 yield scrapy.Request(
@@ -113,9 +113,12 @@ class MopasSpider(scrapy.Spider):
             for product_card in product_cards:
                 product_name = product_card.css("a.product-title::text").get()
                 product_link = self.home_url + product_card.css("a.product-title::attr(href)").get()
-                product_price = float(product_card.css(".sale-price::text").get().replace('₺', '').replace(',', '.'))
-                product_price_high = product_card.css(".old-price::text").get().replace('₺', '').replace(',', '.')
-                product_price_high = float(product_price_high) if product_price_high else None
+                product_price = float(product_card.css(".sale-price::text").get()
+                                      .replace('₺', '').replace('.', '').replace(',', '.'))
+                product_price_high = product_card.css(".old-price::text").get()
+                product_price_high = float(product_price_high
+                                           .replace('₺', '').replace('.', '')
+                                           .replace(',', '.')) if bool(product_price_high) else None
                 is_in_stock = bool(product_card.css(".btn.btn-primary.btn-block.js-enable-btn.add-to-basket.addToBasket"
                                                     ".gtmProductClick").get())
 
