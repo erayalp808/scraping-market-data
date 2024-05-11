@@ -1,3 +1,5 @@
+import traceback
+
 import scrapy
 import pandas as pd
 from math import ceil
@@ -42,8 +44,8 @@ class SokmarketSpider(scrapy.Spider):
                         "main_category": name
                     }
                 )
-        except Exception as exception:
-            print(exception)
+        except:
+            traceback.print_exc()
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse,
@@ -79,8 +81,8 @@ class SokmarketSpider(scrapy.Spider):
                         "categories": (response.meta["main_category"], name)
                     }
                 )
-        except Exception as exception:
-            print(exception)
+        except:
+            traceback.print_exc()
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse_sub_categories,
@@ -102,8 +104,8 @@ class SokmarketSpider(scrapy.Spider):
             selector = scrapy.Selector(text=content)
             number_of_pages = ceil(
                 int(selector.css(".PLPDesktopHeader_quantityInfoText__4AiWN::text").get().split(" ")[0]) / 20)
-
             current_page_number = 0
+
             while current_page_number < number_of_pages:
                 current_page_number += 1
                 next_page_url = response.url + f"?page={current_page_number}"
@@ -117,8 +119,8 @@ class SokmarketSpider(scrapy.Spider):
                         "categories": response.meta["categories"]
                     }
                 )
-        except Exception as exception:
-            print(exception)
+        except:
+            traceback.print_exc()
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse_product_quantity,
@@ -149,7 +151,7 @@ class SokmarketSpider(scrapy.Spider):
                     ".CButton-module_medium__XbabL.CButton-module_secondary__vR-1m").get())
 
                 if is_out_of_stock:
-                    product = MarketItem(
+                    yield MarketItem(
                         main_category=main_category,
                         sub_category=sub_category,
                         lowest_category=sub_category,
@@ -161,8 +163,6 @@ class SokmarketSpider(scrapy.Spider):
                         page_link=response.url,
                         date=self.current_date
                     )
-
-                    yield product
                     continue
                 is_discounted = bool(product_card.css(".CPriceBox-module_discountedPriceContainer__nsaTN").get())
                 product_price = float(product_card.css("span.CPriceBox-module_discountedPrice__15Ffw::text").get()
@@ -173,22 +173,20 @@ class SokmarketSpider(scrapy.Spider):
                                            .replace('₺', '').replace('.', '').replace(',', '.')) \
                     if is_discounted else None
 
-                product = MarketItem(
-                    category2=main_category,
-                    category1=sub_category,
-                    category=sub_category,
-                    prod=product_name,
+                yield MarketItem(
+                    main_category=main_category,
+                    sub_category=sub_category,
+                    lowest_category=sub_category,
+                    name=product_name,
                     price=product_price,
                     high_price=product_price_high,
-                    prod_link=product_link,
-                    pages=response.url,
                     in_stock=True,
+                    product_link=product_link,
+                    page_link=response.url,
                     date=self.current_date
                 )
-
-                yield product
-        except Exception as exception:
-            print(exception)
+        except:
+            traceback.print_exc()
             yield scrapy.Request(
                 url=response.url,
                 callback=self.parse_products,
