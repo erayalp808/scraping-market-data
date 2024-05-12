@@ -14,21 +14,13 @@ class MarketpaketiSpider(scrapy.Spider):
         yield scrapy.Request(
             url=self.home_url,
             meta={
-                "playwright": True,
-                "playwright_include_page": True
+                "playwright": False,
             }
         )
 
     async def parse(self, response):
-        page = response.meta["playwright_page"]
-
         try:
-            await page.wait_for_load_state("domcontentloaded")
-            content = await page.content()
-            page.close()
-
-            selector = scrapy.Selector(text=content)
-            main_categories = selector.css("a.dMenu")
+            main_categories = response.css("a.dMenu")
 
             for main_category in main_categories:
                 main_cateory_name = main_category.css("::text").get().strip()
@@ -38,8 +30,7 @@ class MarketpaketiSpider(scrapy.Spider):
                     url=main_category_link,
                     callback=self.parse_sub_categories,
                     meta={
-                        "playwright": True,
-                        "playwright_include_page": True,
+                        "playwright": False,
                         "categories": {
                             "main_category": main_cateory_name
                         },
@@ -48,25 +39,10 @@ class MarketpaketiSpider(scrapy.Spider):
                 )
         except:
             traceback.print_exc()
-            yield scrapy.Request(
-                url=response.url,
-                callback=self.parse,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                }
-            )
 
     async def parse_sub_categories(self, response):
-        page = response.meta["playwright_page"]
-
         try:
-            await page.wait_for_load_state("domcontentloaded")
-            content = await page.content()
-            page.close()
-
-            selector = scrapy.Selector(text=content)
-            sub_categories = selector.css(".uf_blok:nth-child(1) ul.ufb_icerik li a")
+            sub_categories = response.css(".uf_blok:nth-child(1) ul.ufb_icerik li a")
             is_lowest_category = response.meta["is_lowest_category"]
 
             if sub_categories:
@@ -80,8 +56,7 @@ class MarketpaketiSpider(scrapy.Spider):
                         url=sub_category_link,
                         callback=self.parse_page_number if is_lowest_category else self.parse_sub_categories,
                         meta={
-                            "playwright": True,
-                            "playwright_include_page": True,
+                            "playwright": False,
                             "categories": categories,
                             "is_lowest_category": True
 
@@ -95,33 +70,16 @@ class MarketpaketiSpider(scrapy.Spider):
                     url=response.url,
                     callback=self.parse_page_number,
                     meta={
-                        "playwright": True,
-                        "playwright_include_page": True,
+                        "playwright": False,
                         "categories": categories
                     }
                 )
         except:
             traceback.print_exc()
-            yield scrapy.Request(
-                url=response.url,
-                callback=self.parse_sub_categories,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                    "categories": response.meta["categories"]
-                }
-            )
 
     async def parse_page_number(self, response):
-        page = response.meta["playwright_page"]
-
         try:
-            await page.wait_for_load_state("domcontentloaded")
-            content = await page.content()
-            await page.close()
-
-            selector = scrapy.Selector(text=content)
-            total_page_number = self.get_total_page(selector)
+            total_page_number = self.get_total_page(response)
             current_page = 1
 
             if total_page_number:
@@ -132,8 +90,7 @@ class MarketpaketiSpider(scrapy.Spider):
                         url=page_url,
                         callback=self.parse_products,
                         meta={
-                            "playwright": True,
-                            "playwright_include_page": True,
+                            "playwright": False,
                             "categories": response.meta["categories"]
                         }
                     )
@@ -143,33 +100,16 @@ class MarketpaketiSpider(scrapy.Spider):
                     url=response.url,
                     callback=self.parse_products,
                     meta={
-                        "playwright": True,
-                        "playwright_include_page": True,
+                        "playwright": False,
                         "categories": response.meta["categories"]
                     }
                 )
         except:
             traceback.print_exc()
-            yield scrapy.Request(
-                url=response.url,
-                callback=self.parse_page_number,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                    "categories": response.meta["categories"]
-                }
-            )
 
     async def parse_products(self, response):
-        page = response.meta["playwright_page"]
-
         try:
-            await page.wait_for_load_state("domcontentloaded")
-            content = await page.content()
-            await page.close()
-
-            selector = scrapy.Selector(text=content)
-            product_cards = selector.css(".liste_urun")
+            product_cards = response.css(".liste_urun")
 
             if product_cards:
                 for product_card in product_cards:
@@ -197,15 +137,6 @@ class MarketpaketiSpider(scrapy.Spider):
                     )
         except:
             traceback.print_exc()
-            yield scrapy.Request(
-                url=response.url,
-                callback=self.parse_products,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                    "categories": response.meta["categories"]
-                }
-            )
 
     def get_total_page(self, category_page):
         total_page_number = category_page.css(".sayfalama .say::text").getall()

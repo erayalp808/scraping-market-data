@@ -28,21 +28,13 @@ class CarrefourSpider(scrapy.Spider):
         yield scrapy.Request(
             url=self.home_url,
             meta={
-                "playwright": True,
-                "playwright_include_page": True
+                "playwright": False
             }
         )
 
     async def parse(self, response):
-        page = response.meta["playwright_page"]
-
         try:
-            await page.wait_for_load_state("domcontentloaded")
-            content = await page.content()
-            await page.close()
-
-            selector = scrapy.Selector(text=content)
-            categories = selector.css("li.main-menu-item")
+            categories = response.css("li.main-menu-item")
 
             for category in categories:
                 main_category_name = category.css("a.main-menu-item-link  span:nth-child(2)::text").get().strip()
@@ -59,62 +51,40 @@ class CarrefourSpider(scrapy.Spider):
                         for lowest_category in lowest_categories:
                             lowest_category_name = lowest_category.css("::text").get().strip()
                             lowest_category_url = lowest_category.attrib["href"]
-                            info = {
-                                "main_category": main_category_name,
-                                "sub_category": sub_category_name,
-                                "lowest_category": lowest_category_name
-                            }
 
                             yield scrapy.Request(
                                 url=self.home_url + lowest_category_url,
                                 callback=self.parse_category_page,
                                 meta={
-                                    "playwright": True,
-                                    "playwright_include_page": True,
-                                    "info": info
+                                    "playwright": False,
+                                    "categories": {
+                                        "main_category": main_category_name,
+                                        "sub_category": sub_category_name,
+                                        "lowest_category": lowest_category_name
+                                    }
                                 },
                                 headers={"User-Agent": random.choice(self.user_agent_list)}
                             )
                     else:
-                        info = {
-                            "main_category": main_category_name,
-                            "sub_category": sub_category_name,
-                            "lowest_category": None
-                        }
-
                         yield scrapy.Request(
                             url=self.home_url + sub_category_url,
                             callback=self.parse_category_page,
                             meta={
-                                "playwright": True,
-                                "playwright_include_page": True,
-                                "info": info
+                                "playwright": False,
+                                "categories": {
+                                    "main_category": main_category_name,
+                                    "sub_category": sub_category_name,
+                                    "lowest_category": None
+                                }
                             },
                             headers={"User-Agent": random.choice(self.user_agent_list)}
                         )
-
-            await page.close()
         except:
             traceback.print_exc()
-            yield scrapy.Request(
-                url=response.url,
-                callback=self.parse,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                }
-            )
 
     async def parse_category_page(self, response):
-        page = response.meta["playwright_page"]
-
         try:
-            await page.wait_for_load_state("domcontentloaded")
-            content = await page.content()
-            await page.close()
-
-            selector = scrapy.Selector(text=content)
-            product_cards = selector.css("li.product-listing-item .hover-box")
+            product_cards = response.css("li.product-listing-item .hover-box")
 
             for product_card in product_cards:
                 is_out_of_stock = bool(product_card.css(".oos-cont").get())
@@ -124,9 +94,9 @@ class CarrefourSpider(scrapy.Spider):
                 product_link = self.home_url + product_card.css("a::attr(href)").get()
 
                 yield MarketItem(
-                    main_category=response.meta["info"]["main_category"],
-                    sub_category=response.meta["info"]["sub_category"],
-                    lowest_category=response.meta["info"]["lowest_category"],
+                    main_category=response.meta["categories"]["main_category"],
+                    sub_category=response.meta["categories"]["sub_category"],
+                    lowest_category=response.meta["categories"]["lowest_category"],
                     name=product_name,
                     price=product_price,
                     high_price=product_price_high,
@@ -136,29 +106,19 @@ class CarrefourSpider(scrapy.Spider):
                     date=self.current_date
                 )
 
-            next_page = self.get_next_page(selector)
+            next_page = self.get_next_page(response)
 
             if next_page is not None:
                 yield scrapy.Request(
                     url=self.home_url + next_page,
                     callback=self.parse_category_page,
                     meta={
-                        "playwright": True,
-                        "playwright_include_page": True,
-                        "info": response.meta["info"]
+                        "playwright": False,
+                        "categories": response.meta["categories"]
                     }
                 )
         except:
             traceback.print_exc()
-            yield scrapy.Request(
-                url=response.url,
-                callback=self.parse_category_page,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                    "info": response.meta["info"]
-                }
-            )
 
     def parse_price_high(self, product_card):
         whole_part = product_card.css("span.priceLineThrough::text").get()

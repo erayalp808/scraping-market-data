@@ -27,21 +27,19 @@ class SokmarketSpider(scrapy.Spider):
             await page.close()
 
             selector = scrapy.Selector(text=content)
-            main_category_tags = selector.css(".CategoryList_categories__wmXtl")[0]
-            main_categories = pd.DataFrame({
-                "names": main_category_tags.css("span::text").getall()[2:-1],
-                "links": list(
-                    map(lambda href: self.home_url + href[1:], main_category_tags.css("a::attr(href)").getall()[2:-1]))
-            })
+            main_category_tags = selector.css(".CategoryList_categories__wmXtl")[0].css("a")
 
-            for index, name, link in main_categories.itertuples():
+            for main_category_tag in main_category_tags:
+                main_category_name = main_category_tag.css("span::text").get().strip()
+                main_category_link = self.home_url + main_category_tag.css("::attr(href)").get()[1:]
+
                 yield scrapy.Request(
-                    url=link,
+                    url=main_category_link,
                     callback=self.parse_sub_categories,
                     meta={
                         "playwright": True,
                         "playwright_include_page": True,
-                        "main_category": name
+                        "main_category": main_category_name
                     }
                 )
         except:
@@ -64,21 +62,19 @@ class SokmarketSpider(scrapy.Spider):
             await page.close()
 
             selector = scrapy.Selector(text=content)
-            sub_category_tags = selector.css(".CCollapse-module_cCollapseContent__sR6gM")[0]
-            sub_categories = pd.DataFrame({
-                "sub_category": sub_category_tags.css("div a::text").getall(),
-                "links": list(
-                    map(lambda href: self.home_url + href, sub_category_tags.css("div a::attr(href)").getall()))
-            })
+            sub_category_tags = selector.css(".CCollapse-module_cCollapseContent__sR6gM")[0].css("div a")
 
-            for index, name, link in sub_categories.itertuples():
+            for sub_category_tag in sub_category_tags:
+                sub_category_name = sub_category_tag.css("::text").get().strip()
+                sub_category_link = self.home_url + sub_category_tag.css("::attr(href)").get()
+
                 yield scrapy.Request(
-                    url=link,
+                    url=sub_category_link,
                     callback=self.parse_product_quantity,
                     meta={
                         "playwright": True,
                         "playwright_include_page": True,
-                        "categories": (response.meta["main_category"], name)
+                        "categories": (response.meta["main_category"], sub_category_name)
                     }
                 )
         except:
