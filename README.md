@@ -14,6 +14,7 @@ Spider names can be listed as
 - carrefour ([carrefoursa](https://www.carrefoursa.com))
 - mopas ([mopaş](https://www.mopas.com.tr))
 - marketpaketi ([marketpaketi](https://www.marketpaketi.com.tr))
+- migros ([migros](https://www.migros.com.tr))
 
 The scraped data is stored in .csv files and the current date as their names.
 
