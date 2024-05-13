@@ -9,13 +9,24 @@ class MarketpaketiSpider(scrapy.Spider):
     name = "marketpaketi"
     home_url = "https://www.marketpaketi.com.tr"
     current_date = date.today()
+    custom_settings = {
+        "FEEDS": {
+            f"{name}_{current_date}.csv": {
+                "format": "csv",
+                "encoding": "utf8",
+                "store_empty": False,
+                "fields": None,
+                "indent": 4,
+                "item_export_kwargs": {
+                    "export_empty_fields": True,
+                }
+            }
+        }
+    }
 
     def start_requests(self):
         yield scrapy.Request(
-            url=self.home_url,
-            meta={
-                "playwright": False,
-            }
+            url=self.home_url
         )
 
     async def parse(self, response):
@@ -30,7 +41,6 @@ class MarketpaketiSpider(scrapy.Spider):
                     url=main_category_link,
                     callback=self.parse_sub_categories,
                     meta={
-                        "playwright": False,
                         "categories": {
                             "main_category": main_cateory_name
                         },
@@ -56,7 +66,6 @@ class MarketpaketiSpider(scrapy.Spider):
                         url=sub_category_link,
                         callback=self.parse_page_number if is_lowest_category else self.parse_sub_categories,
                         meta={
-                            "playwright": False,
                             "categories": categories,
                             "is_lowest_category": True
 
@@ -70,7 +79,6 @@ class MarketpaketiSpider(scrapy.Spider):
                     url=response.url,
                     callback=self.parse_page_number,
                     meta={
-                        "playwright": False,
                         "categories": categories
                     }
                 )
@@ -90,7 +98,6 @@ class MarketpaketiSpider(scrapy.Spider):
                         url=page_url,
                         callback=self.parse_products,
                         meta={
-                            "playwright": False,
                             "categories": response.meta["categories"]
                         }
                     )
@@ -100,7 +107,6 @@ class MarketpaketiSpider(scrapy.Spider):
                     url=response.url,
                     callback=self.parse_products,
                     meta={
-                        "playwright": False,
                         "categories": response.meta["categories"]
                     }
                 )

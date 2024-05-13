@@ -8,6 +8,20 @@ class MigrosSpider(scrapy.Spider):
     name = "migros"
     home_url = "https://www.migros.com.tr/"
     current_date = date.today()
+    custom_settings = {
+        "FEEDS": {
+            f"{name}_{current_date}.csv": {
+                "format": "csv",
+                "encoding": "utf8",
+                "store_empty": False,
+                "fields": None,
+                "indent": 4,
+                "item_export_kwargs": {
+                    "export_empty_fields": True,
+                }
+            }
+        }
+    }
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0",
         "Accept": "application/json",
@@ -22,9 +36,6 @@ class MigrosSpider(scrapy.Spider):
     def start_requests(self):
         yield scrapy.Request(
             url="https://www.migros.com.tr/rest/categories",
-            meta={
-                "playwright": False
-            },
             headers=self.headers
         )
 
@@ -44,9 +55,6 @@ class MigrosSpider(scrapy.Spider):
                     yield scrapy.Request(
                         url=product_api_endpoint,
                         callback=self.parse_page_count,
-                        meta={
-                            "playwright": False
-                        },
                         headers=self.headers
                     )
 
@@ -57,7 +65,6 @@ class MigrosSpider(scrapy.Spider):
                 url=response.url + f"&sayfa={current_page_number}&sirala=onerilenler",
                 callback=self.parse_products,
                 meta={
-                    "playwright": False,
                     "page_number": current_page_number
                 },
                 headers=self.headers

@@ -11,6 +11,24 @@ class SokmarketSpider(scrapy.Spider):
     name = "sokmarket"
     current_date = date.today()
     home_url = "https://www.sokmarket.com.tr/"
+    custom_settings = {
+        "FEEDS": {
+            f"{name}_{current_date}.csv": {
+                "format": "csv",
+                "encoding": "utf8",
+                "store_empty": False,
+                "fields": None,
+                "indent": 4,
+                "item_export_kwargs": {
+                    "export_empty_fields": True,
+                }
+            }
+        },
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler"
+        }
+    }
 
     def start_requests(self):
         yield scrapy.Request(url=self.home_url, meta={

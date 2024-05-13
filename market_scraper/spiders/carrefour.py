@@ -11,7 +11,20 @@ class CarrefourSpider(scrapy.Spider):
     name = "carrefour"
     current_date = date.today()
     home_url = "https://www.carrefoursa.com"
-
+    custom_settings = {
+        "FEEDS": {
+            f"{name}_{current_date}.csv": {
+                "format": "csv",
+                "encoding": "utf8",
+                "store_empty": False,
+                "fields": None,
+                "indent": 4,
+                "item_export_kwargs": {
+                    "export_empty_fields": True,
+                }
+            }
+        }
+    }
     user_agent_list = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 "
         "Safari/537.36",
@@ -26,10 +39,7 @@ class CarrefourSpider(scrapy.Spider):
 
     def start_requests(self):
         yield scrapy.Request(
-            url=self.home_url,
-            meta={
-                "playwright": False
-            }
+            url=self.home_url
         )
 
     async def parse(self, response):
@@ -56,7 +66,6 @@ class CarrefourSpider(scrapy.Spider):
                                 url=self.home_url + lowest_category_url,
                                 callback=self.parse_category_page,
                                 meta={
-                                    "playwright": False,
                                     "categories": {
                                         "main_category": main_category_name,
                                         "sub_category": sub_category_name,
@@ -70,7 +79,6 @@ class CarrefourSpider(scrapy.Spider):
                             url=self.home_url + sub_category_url,
                             callback=self.parse_category_page,
                             meta={
-                                "playwright": False,
                                 "categories": {
                                     "main_category": main_category_name,
                                     "sub_category": sub_category_name,
@@ -113,7 +121,6 @@ class CarrefourSpider(scrapy.Spider):
                     url=self.home_url + next_page,
                     callback=self.parse_category_page,
                     meta={
-                        "playwright": False,
                         "categories": response.meta["categories"]
                     }
                 )

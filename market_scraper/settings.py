@@ -12,33 +12,11 @@ BOT_NAME = "market_scraper"
 
 SPIDER_MODULES = ["market_scraper.spiders"]
 NEWSPIDER_MODULE = "market_scraper.spiders"
-
-FEEDS = {
-    f"{date.today()}.csv": {
-        "format": "csv",
-        "encoding": "utf8",
-        "store_empty": False,
-        "fields": None,
-        "indent": 4,
-        "item_export_kwargs": {
-            "export_empty_fields": True,
-        },
-    },
-}
-
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "market_scraper (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
-
-DOWNLOAD_HANDLERS = {
-    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-}
-
-TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
-
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 

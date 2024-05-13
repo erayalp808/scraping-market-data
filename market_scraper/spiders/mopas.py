@@ -8,13 +8,24 @@ class MopasSpider(scrapy.Spider):
     name = "mopas"
     home_url = "https://www.mopas.com.tr"
     current_date = date.today()
+    custom_settings = {
+        "FEEDS": {
+            f"{name}_{current_date}.csv": {
+                "format": "csv",
+                "encoding": "utf8",
+                "store_empty": False,
+                "fields": None,
+                "indent": 4,
+                "item_export_kwargs": {
+                    "export_empty_fields": True,
+                }
+            }
+        }
+    }
 
     def start_requests(self):
         yield scrapy.Request(
-            url=self.home_url,
-            meta={
-                "playwright": False
-            }
+            url=self.home_url
         )
 
     def parse(self, response):
@@ -33,7 +44,6 @@ class MopasSpider(scrapy.Spider):
                         url=sub_category_link,
                         callback=self.parse_lowest_categories,
                         meta={
-                            "playwright": False,
                             "categories": {
                                 "main_category": main_category_name,
                                 "sub_category": sub_category_name
@@ -56,7 +66,6 @@ class MopasSpider(scrapy.Spider):
                         url=lowest_category_link,
                         callback=self.parse_products,
                         meta={
-                            "playwright": False,
                             "categories": dict(response.meta["categories"], lowest_category=lowest_category_name)
                         }
                     )
@@ -124,7 +133,6 @@ class MopasSpider(scrapy.Spider):
                 url=self.home_url + next_page_href,
                 callback=self.parse_products,
                 meta={
-                    "playwright": False,
                     "categories": response.meta["categories"]
                 }
             )
