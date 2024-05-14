@@ -57,7 +57,7 @@ $ scrapy crawl <spider name>
 ```
 
 ### Use one script to run spiders, merge datas and store data in one folder
-<span style="color: grey;">Use this script to scrape datas into "market_scraper/data" directory</span>
+<span style="color: grey;">Use this script to scrape datas into "market_scraper/data" directory, merge them together and store in one file under "market_scraper/data/merged_data" </span>
 ```
 $ python run_spiders.py
 ```
