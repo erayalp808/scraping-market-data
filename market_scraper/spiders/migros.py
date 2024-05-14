@@ -85,7 +85,7 @@ class MigrosSpider(scrapy.Spider):
                 in_stock=True,
                 product_link=self.home_url + product_data["prettyName"],
                 page_link=self.home_url + product_data["category"][
-                    "name"] + f"?sayfa={response.meta['page_number']}&sirala=onerilenler",
+                    "prettyName"] + f"?sayfa={response.meta['page_number']}&sirala=onerilenler",
                 date=self.current_date
             )
 
