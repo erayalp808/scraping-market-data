@@ -56,8 +56,8 @@ $ playwright install
 $ scrapy crawl <spider name>
 ```
 
-### Use one script to run spiders and store data in one folder
+### Use one script to run spiders, merge datas and store data in one folder
 <span style="color: grey;">Use this script to scrape datas into "market_scraper/data" directory</span>
 ```
-$ python3 run_spiders.py
+$ python run_spiders.py
 ```
