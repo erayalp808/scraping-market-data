@@ -1,3 +1,4 @@
+import bs4
 import scrapy
 import traceback
 
@@ -121,12 +122,7 @@ class MarketpaketiSpider(scrapy.Spider):
                 for product_card in product_cards:
                     product_name = product_card.css("a.urun_adi_ic::text").get().strip()
                     product_link = product_card.css("a.urun_adi_ic::attr(href)").get()
-                    product_price_high = product_card.css(".urun_fiyat strong::text").get()
-                    product_price = product_card.css(".urun_fiyat::text").get().replace(" TL", '').strip()
-
-                    if product_price_high:
-                        product_price_high = product_price_high.replace(" TL", '').strip()
-
+                    product_price, product_price_high = self.get_prices(product_card.get())
                     is_in_stock = bool(product_card.css(".urun_sepet").get())
 
                     yield MarketItem(
@@ -151,3 +147,40 @@ class MarketpaketiSpider(scrapy.Spider):
             return int(total_page_number[-1].strip())
         else:
             return None
+
+    def get_prices(self, product_card):
+        soup = bs4.BeautifulSoup(product_card, 'html.parser')
+        price_tag = soup.find('div', class_='urun_fiyat')
+
+        def sale_price(product_price_tag):
+            try:
+                return float(product_price_tag.find('strong').next_sibling.strip().strip('TL ').replace(',', '.'))
+            except AttributeError:
+                try:
+                    return float(product_price_tag.text.strip().split()[0].replace(',', '.'))
+                except ValueError:
+                    try:
+                        return float(product_price_tag.find('strong').next_sibling.replace('.', '').replace(',', '.').split()[0])
+                    except AttributeError:
+                        return float(product_price_tag.text.strip().split()[0].strip('TL ').replace('.', '').replace(',', '.'))
+                    finally:
+                        return None
+
+            except ValueError:
+                try:
+                    return float(product_price_tag.find('strong').next_sibling.strip().replace('.', '').replace(',', '.').split()[0])
+                except AttributeError:
+                    return float(product_price_tag.text.strip().split()[0].strip('TL ').replace('.', '').replace(',', '.'))
+
+        def old_price(product_price_tag):
+            try:
+                return float(product_price_tag.find('strong').get_text().strip('TL ').replace(',', '.'))
+            except AttributeError:
+                return None
+            except ValueError:
+                return float(product_price_tag.find('strong').get_text().strip('TL ').replace('.', '').replace(',', '.'))
+
+        product_price = sale_price(price_tag)
+        product_price_high = old_price(price_tag)
+
+        return product_price, product_price_high
