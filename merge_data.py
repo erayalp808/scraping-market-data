@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 current_date = date.today()
-daily_data = pd.DataFrame(columns=[
+columns = [
     "main_category",
     "sub_category",
     "lowest_category",
@@ -16,7 +16,24 @@ daily_data = pd.DataFrame(columns=[
     "product_link",
     "page_link",
     "date"
-])
+]
+dtypes = {
+    "main_category": str,
+    "sub_category": str,
+    "lowest_category": str,
+    "name": str,
+    "price": float,
+    "high_price": float,
+    "in_stock": bool,
+    "product_link": str,
+    "page_link": str,
+    "date": str
+}
+daily_data = pd.DataFrame(columns=columns)
+
+for column, dtype in dtypes.items():
+    daily_data[column] = daily_data[column].astype(dtype)
+
 spiders = ["migros", "carrefour", "sokmarket", "mopas", "marketpaketi"]
 
 for spider in spiders:
