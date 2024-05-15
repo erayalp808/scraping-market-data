@@ -36,7 +36,7 @@ $ git clone https://github.com/erayalp808/scraping-market-data.git
 $ cd scraping-market-data
 ```
 ### Create and activate a virtual environment
-<span style="color: grey;">To ensure that the needed Python packages do not corrupt the Python packages in your local area</span>
+<span style="color: gray;">To ensure that the needed Python packages do not corrupt the Python packages in your local area</span>
 ```
 $ virtualenv venv
 $ source venv/bin/activate
@@ -49,6 +49,10 @@ $ source venv/bin/activate
 ### Install the required browsers for playwright
 ```
 $ playwright install
+```
+<span style="color: gray;">if you have missing dependencies, use "install-deps"</span>
+```
+$ playwright install-deps
 ```
 
 ### Run the spiders
