@@ -41,6 +41,7 @@ for spider in spiders:
     try:
         market_data = pd.read_csv(f"market_scraper/data/{spider}_{current_date}.csv")
         daily_data = pd.concat([daily_data, market_data], axis=0, ignore_index=True)
+        print(f"{spider}_{current_date}.csv merged successfully")
     except:
         traceback.print_exc()
 
