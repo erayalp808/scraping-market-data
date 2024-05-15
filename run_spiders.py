@@ -6,7 +6,7 @@ os.chdir("market_scraper")
 os.makedirs("data", exist_ok=True)
 os.chdir("data")
 
-spiders = ["migros", "carrefour", "mopas", "sokmarket", "marketpaketi"]
+spiders = ["migros", "carrefour", "mopas", "marketpaketi", "sokmarket"]
 
 for spider in spiders:
     os.system(f"scrapy crawl {spider}")
