@@ -1,3 +1,4 @@
+import traceback
 import pandas as pd
 import numpy as np
 from datetime import date
@@ -34,11 +35,14 @@ daily_data = pd.DataFrame(columns=columns)
 for column, dtype in dtypes.items():
     daily_data[column] = daily_data[column].astype(dtype)
 
-spiders = ["migros", "carrefour", "sokmarket", "mopas", "marketpaketi"]
+spiders = ["migros", "carrefour", "mopas", "marketpaketi", "sokmarket"]
 
 for spider in spiders:
-    market_data = pd.read_csv(f"market_scraper/data/{spider}_{current_date}.csv")
-    daily_data = pd.concat([daily_data, market_data], axis=0, ignore_index=True)
+    try:
+        market_data = pd.read_csv(f"market_scraper/data/{spider}_{current_date}.csv")
+        daily_data = pd.concat([daily_data, market_data], axis=0, ignore_index=True)
+    except:
+        traceback.print_exc()
 
 path_base = Path(__file__).parent.resolve().as_posix() + "/"
 
