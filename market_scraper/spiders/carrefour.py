@@ -1,7 +1,5 @@
 import traceback
-
 import scrapy
-
 from ..items import MarketItem
 from datetime import date
 import random

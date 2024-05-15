@@ -1,7 +1,6 @@
 import bs4
 import scrapy
 import traceback
-
 from ..items import MarketItem
 from datetime import date
 

@@ -1,7 +1,6 @@
 import traceback
 
 import scrapy
-import pandas as pd
 from math import ceil
 from ..items import MarketItem
 from datetime import date
