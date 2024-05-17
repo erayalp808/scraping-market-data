@@ -12,4 +12,4 @@ for spider in spiders:
     os.system(f"scrapy crawl {spider}")
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-os.system("python merge_data.py")
+os.system("python3 merge_data.py")
